@@ -19,7 +19,10 @@ declare module 'react-simple-maps' {
     strokeWidth?: number;
     filter?: string;
     'data-color'?: string;
+    'data-country-name'?: string;
+    'data-country-code'?: string;
     onClick?: (event: React.MouseEvent<SVGPathElement>) => void;
+    onContextMenu?: (event: React.MouseEvent<SVGPathElement>) => void;
     onMouseEnter?: (event: React.MouseEvent<SVGPathElement>) => void;
     onMouseMove?: (event: React.MouseEvent<SVGPathElement>) => void;
     onMouseLeave?: (event: React.MouseEvent<SVGPathElement>) => void;

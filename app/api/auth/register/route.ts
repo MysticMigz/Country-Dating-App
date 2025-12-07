@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           name: user.name,
           visitedCountries: user.visitedCountries,
+          datedCountries: user.datedCountries || [],
         },
       },
       { status: 201 }

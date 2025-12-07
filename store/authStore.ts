@@ -6,6 +6,7 @@ interface User {
   email: string;
   name: string;
   visitedCountries: string[];
+  datedCountries: string[];
 }
 
 interface AuthState {
@@ -14,6 +15,7 @@ interface AuthState {
   setAuth: (user: User, token: string) => void;
   clearAuth: () => void;
   updateVisitedCountries: (countries: string[]) => void;
+  updateDatedCountries: (countries: string[]) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,6 +28,10 @@ export const useAuthStore = create<AuthState>()(
       updateVisitedCountries: (countries) =>
         set((state) => ({
           user: state.user ? { ...state.user, visitedCountries: countries } : null,
+        })),
+      updateDatedCountries: (countries) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, datedCountries: countries } : null,
         })),
     }),
     {

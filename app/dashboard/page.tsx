@@ -7,15 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import CountryMap from '@/components/CountryMap';
 import VisitedCountriesPanel from '@/components/VisitedCountriesPanel';
+import DatedCountriesPanel from '@/components/DatedCountriesPanel';
+import CountrySelectionDialog from '@/components/CountrySelectionDialog';
+import CountryFilter, { FilterType } from '@/components/CountryFilter';
 import { countries } from '@/lib/countries';
-import { LogOut, Globe, CheckCircle2, X, MapPin } from 'lucide-react';
+import { LogOut, Globe, CheckCircle2, X, MapPin, Heart } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, token, clearAuth, updateVisitedCountries } = useAuthStore();
+  const { user, token, clearAuth, updateVisitedCountries, updateDatedCountries } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [mapLoading, setMapLoading] = useState(false);
   const [showPanel, setShowPanel] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const lastFetchedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -36,15 +43,27 @@ export default function DashboardPage() {
     if (!token) return;
     
     try {
-      const response = await fetch('/api/countries', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const [visitedResponse, datedResponse] = await Promise.all([
+        fetch('/api/countries', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch('/api/dated-countries', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
-        updateVisitedCountries(data.visitedCountries);
+      if (visitedResponse.ok) {
+        const data = await visitedResponse.json();
+        updateVisitedCountries(data.visitedCountries || []);
+      }
+      
+      if (datedResponse.ok) {
+        const data = await datedResponse.json();
+        updateDatedCountries(data.datedCountries || []);
       }
     } catch (error) {
       console.error('Failed to fetch countries:', error);
@@ -53,20 +72,23 @@ export default function DashboardPage() {
     }
   };
 
-  const handleCountryClick = async (countryCode: string) => {
-    if (!token) return;
+  const handleCountryClick = (countryCode: string) => {
+    setSelectedCountry(countryCode);
+    setIsDialogOpen(true);
+  };
+
+  const handleAddToVisited = async () => {
+    if (!token || !selectedCountry) return;
     
     setMapLoading(true);
-    const isVisited = user?.visitedCountries.includes(countryCode);
-    
     try {
       const response = await fetch('/api/countries', {
-        method: isVisited ? 'DELETE' : 'POST',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ countryCode }),
+        body: JSON.stringify({ countryCode: selectedCountry }),
       });
 
       if (response.ok) {
@@ -75,6 +97,31 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Failed to update country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  const handleRemoveFromVisited = async () => {
+    if (!token || !selectedCountry) return;
+    
+    setMapLoading(true);
+    try {
+      const response = await fetch('/api/countries', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode: selectedCountry }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateVisitedCountries(data.visitedCountries);
+      }
+    } catch (error) {
+      console.error('Failed to remove country:', error);
     } finally {
       setMapLoading(false);
     }
@@ -106,6 +153,82 @@ export default function DashboardPage() {
     }
   };
 
+  const handleAddToDated = async () => {
+    if (!token || !selectedCountry) return;
+    
+    setMapLoading(true);
+    try {
+      const response = await fetch('/api/dated-countries', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode: selectedCountry }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateDatedCountries(data.datedCountries);
+      }
+    } catch (error) {
+      console.error('Failed to update dated country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  const handleRemoveFromDated = async () => {
+    if (!token || !selectedCountry) return;
+    
+    setMapLoading(true);
+    try {
+      const response = await fetch('/api/dated-countries', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode: selectedCountry }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateDatedCountries(data.datedCountries);
+      }
+    } catch (error) {
+      console.error('Failed to remove dated country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  const handleRemoveDatedCountry = async (countryCode: string) => {
+    if (!token) return;
+    
+    setMapLoading(true);
+    
+    try {
+      const response = await fetch('/api/dated-countries', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateDatedCountries(data.datedCountries);
+      }
+    } catch (error) {
+      console.error('Failed to remove dated country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     clearAuth();
     router.push('/login');
@@ -120,6 +243,7 @@ export default function DashboardPage() {
   }
 
   const visitedCount = user.visitedCountries.length;
+  const datedCount = user.datedCountries?.length || 0;
   const totalCount = countries.length;
   const percentage = Math.round((visitedCount / totalCount) * 100);
 
@@ -143,6 +267,16 @@ export default function DashboardPage() {
             Logout
           </Button>
         </div>
+
+        {/* Filter */}
+        <CountryFilter
+          filterType={filterType}
+          searchQuery={searchQuery}
+          onFilterChange={setFilterType}
+          onSearchChange={setSearchQuery}
+          visitedCount={visitedCount}
+          datedCount={datedCount}
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -179,10 +313,10 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Main Content: Map and Side Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Main Content: Map and Side Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
           {/* Map - Takes 3 columns on large screens */}
-          <div className={`lg:col-span-3 transition-all duration-300 ${showPanel ? '' : 'lg:col-span-4'}`}>
+          <div className={`lg:col-span-3 transition-all duration-300 ${showPanel ? '' : 'lg:col-span-5'}`}>
             <Card className="bg-slate-900/80 border-cyan-500/30 backdrop-blur-sm shadow-2xl shadow-cyan-500/10">
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -192,14 +326,14 @@ export default function DashboardPage() {
                     </CardTitle>
                     <CardDescription className="text-slate-400 flex items-center gap-2 mt-2">
                       <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                      Click countries to mark them as visited. Glowing countries are visited.
+                      Click on countries to add them to your lists.
                     </CardDescription>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowPanel(!showPanel)}
-                    className="lg:hidden"
+                    className="md:hidden"
                   >
                     {showPanel ? <X className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
                   </Button>
@@ -220,20 +354,40 @@ export default function DashboardPage() {
                   )}
                   <CountryMap
                     visitedCountries={user.visitedCountries}
+                    datedCountries={user.datedCountries || []}
                     onCountryClick={handleCountryClick}
+                    filterType={filterType}
+                    searchQuery={searchQuery}
                   />
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Side Panel - Takes 1 column on large screens */}
+          {/* Side Panels - Takes 2 columns on large screens, stacked on mobile */}
           {showPanel && (
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <VisitedCountriesPanel onRemoveCountry={handleRemoveCountry} />
+              <DatedCountriesPanel onRemoveCountry={handleRemoveDatedCountry} />
             </div>
           )}
         </div>
+
+        {/* Country Selection Dialog */}
+        <CountrySelectionDialog
+          isOpen={isDialogOpen}
+          countryCode={selectedCountry}
+          isVisited={user?.visitedCountries.includes(selectedCountry || '') || false}
+          isDated={user?.datedCountries?.includes(selectedCountry || '') || false}
+          onClose={() => {
+            setIsDialogOpen(false);
+            setSelectedCountry(null);
+          }}
+          onAddToVisited={handleAddToVisited}
+          onAddToDated={handleAddToDated}
+          onRemoveFromVisited={handleRemoveFromVisited}
+          onRemoveFromDated={handleRemoveFromDated}
+        />
       </div>
     </div>
   );

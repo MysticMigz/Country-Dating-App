@@ -12,18 +12,33 @@ import { countries } from '@/lib/countries';
 
 const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
+import { FilterType } from './CountryFilter';
+
 interface CountryMapProps {
   visitedCountries: string[];
+  datedCountries?: string[];
   onCountryClick: (countryCode: string) => void;
+  filterType?: FilterType;
+  searchQuery?: string;
 }
 
-export default function CountryMap({ visitedCountries, onCountryClick }: CountryMapProps) {
+export default function CountryMap({ 
+  visitedCountries, 
+  datedCountries = [], 
+  onCountryClick,
+  filterType = 'all',
+  searchQuery = '',
+}: CountryMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [hoveredCountryName, setHoveredCountryName] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
   const isVisited = (countryCode: string) => {
     return visitedCountries.includes(countryCode);
+  };
+
+  const isDated = (countryCode: string) => {
+    return datedCountries.includes(countryCode);
   };
 
   const getCountryName = (countryCode: string) => {
@@ -143,6 +158,9 @@ export default function CountryMap({ visitedCountries, onCountryClick }: Country
             {hoveredCountry && isVisited(hoveredCountry) && (
               <span className="text-green-400 text-xl">✓</span>
             )}
+            {hoveredCountry && isDated(hoveredCountry) && (
+              <span className="text-pink-400 text-xl">❤️</span>
+            )}
           </div>
         </div>
       )}
@@ -186,6 +204,13 @@ export default function CountryMap({ visitedCountries, onCountryClick }: Country
           </filter>
           <filter id="strongGlow">
             <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="pinkGlow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -275,10 +300,26 @@ export default function CountryMap({ visitedCountries, onCountryClick }: Country
                 // Use country code if found, otherwise use name for color generation
                 const countryCode = country ? country.code : countryName;
                 const visited = isVisited(countryCode);
+                const dated = isDated(countryCode);
                 const isHovered = hoveredCountry === countryCode;
+                
+                // Apply filters
+                const matchesSearch = searchQuery === '' || 
+                  countryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (country && country.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                
+                const matchesFilter = 
+                  filterType === 'all' ||
+                  (filterType === 'visited' && visited) ||
+                  (filterType === 'dated' && dated) ||
+                  (filterType === 'both' && (visited || dated));
+                
+                const shouldHighlight = matchesSearch && matchesFilter;
+                const shouldBlackOut = !shouldHighlight && (filterType !== 'all' || searchQuery !== '');
+                
                 // Always generate a color - use country code if available, otherwise use name
                 const colorKey = country ? country.code : countryName;
-                const countryColor = getCountryColor(colorKey);
+                const countryColor = shouldBlackOut ? '#000000' : getCountryColor(colorKey);
                 
                 // Log specific countries that were missing colors
                 const missingColorCountries = ['Albania', 'Algeria', 'Spain', 'Mali', 'Niger', 'South Sudan', 'Congo', 'Turkmenistan', 'Sri Lanka', 'North Korea'];
@@ -305,15 +346,19 @@ export default function CountryMap({ visitedCountries, onCountryClick }: Country
                       default: {
                         outline: 'none',
                         cursor: 'pointer',
-                        filter: visited ? 'url(#strongGlow)' : 'none',
+                        filter: shouldBlackOut ? 'none' : (visited ? 'url(#strongGlow)' : (dated ? 'url(#pinkGlow)' : (shouldHighlight ? 'url(#glow)' : 'none'))),
                         transition: 'all 0.3s ease',
+                        stroke: shouldBlackOut ? '#000000' : (dated ? '#ec4899' : (shouldHighlight ? '#60a5fa' : '#333333')),
+                        strokeWidth: shouldBlackOut ? 0.3 : (dated ? 1.5 : (shouldHighlight ? 1 : 0.5)),
+                        opacity: shouldBlackOut ? 1 : 1,
+                        fill: countryColor,
                       },
                       hover: {
                         outline: 'none',
                         cursor: 'pointer',
-                        stroke: '#ffffff',
-                        strokeWidth: 2,
-                        filter: 'url(#strongGlow)',
+                        stroke: shouldBlackOut ? '#000000' : '#ffffff',
+                        strokeWidth: shouldBlackOut ? 0.3 : 2,
+                        filter: shouldBlackOut ? 'none' : (visited || dated ? 'url(#strongGlow)' : (shouldHighlight ? 'url(#glow)' : 'url(#glow)')),
                         fill: countryColor,
                         opacity: 1,
                       },
@@ -321,7 +366,8 @@ export default function CountryMap({ visitedCountries, onCountryClick }: Country
                         outline: 'none',
                       },
                     }}
-                    onClick={() => {
+                    onClick={(e: React.MouseEvent<SVGPathElement>) => {
+                      e.preventDefault();
                       if (countryCode) {
                         onCountryClick(countryCode);
                       }

@@ -5,6 +5,7 @@ export interface IUser extends Document {
   password: string;
   name: string;
   visitedCountries: string[];
+  datedCountries: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,10 @@ const UserSchema: Schema = new Schema(
       trim: true,
     },
     visitedCountries: {
+      type: [String],
+      default: [],
+    },
+    datedCountries: {
       type: [String],
       default: [],
     },
