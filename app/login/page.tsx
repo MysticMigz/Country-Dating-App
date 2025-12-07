@@ -47,66 +47,89 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
-      <Card className="w-full max-w-md border-blue-500/20 bg-slate-900/80 backdrop-blur-sm">
-        <CardHeader className="space-y-1">
+      <div className="w-full max-w-md space-y-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <img 
+              src="/countrydatingapp-high-resolution-logo.png" 
+              alt="Country Checklist Logo" 
+              className="h-28 w-auto object-contain"
+              onError={(e) => {
+                // Fallback if logo doesn't exist - show text logo
+                (e.target as HTMLImageElement).style.display = 'none';
+                const parent = (e.target as HTMLImageElement).parentElement;
+                if (parent && !parent.querySelector('.text-logo')) {
+                  const textLogo = document.createElement('div');
+                  textLogo.className = 'text-logo text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent';
+                  textLogo.textContent = '🌍 Country Checklist';
+                  parent.appendChild(textLogo);
+                }
+              }}
+            />
+          </div>
+        </div>
+        <Card className="w-full border-blue-500/20 bg-slate-900/80 backdrop-blur-sm">
+          <CardHeader className="space-y-1">
           <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
             Welcome Back
           </CardTitle>
-          <CardDescription className="text-center text-slate-400">
-            Sign in to track your country progress
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md">
-                {error}
+            <CardDescription className="text-center text-slate-400">
+              Sign in to track your country progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-slate-300">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
               </div>
-            )}
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-slate-300">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-slate-800 border-slate-700 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-slate-300">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-slate-800 border-slate-700 text-white"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-            <p className="text-center text-sm text-slate-400">
-              Don't have an account?{' '}
-              <Link href="/register" className="text-blue-400 hover:text-blue-300 underline">
-                Sign up
-              </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium text-slate-300">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
+                disabled={loading}
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+              <p className="text-center text-sm text-slate-400">
+                Don't have an account?{' '}
+                <Link href="/register" className="text-blue-400 hover:text-blue-300 underline">
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

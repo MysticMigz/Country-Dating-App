@@ -48,7 +48,29 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
-      <Card className="w-full max-w-md border-blue-500/20 bg-slate-900/80 backdrop-blur-sm">
+      <div className="w-full max-w-md space-y-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <img 
+              src="/countrydatingapp-high-resolution-logo.png" 
+              alt="Country Checklist Logo" 
+              className="h-28 w-auto object-contain"
+              onError={(e) => {
+                // Fallback if logo doesn't exist - show text logo
+                (e.target as HTMLImageElement).style.display = 'none';
+                const parent = (e.target as HTMLImageElement).parentElement;
+                if (parent && !parent.querySelector('.text-logo')) {
+                  const textLogo = document.createElement('div');
+                  textLogo.className = 'text-logo text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent';
+                  textLogo.textContent = '🌍 Country Checklist';
+                  parent.appendChild(textLogo);
+                }
+              }}
+            />
+          </div>
+        </div>
+        <Card className="w-full border-blue-500/20 bg-slate-900/80 backdrop-blur-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
             Create Account

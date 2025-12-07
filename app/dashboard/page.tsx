@@ -252,11 +252,25 @@ export default function DashboardPage() {
       <div className="container mx-auto p-4 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Welcome, {user.name}!
-            </h1>
-            <p className="text-slate-400 mt-1">Track your country adventures</p>
+          <div className="flex items-center gap-4">
+            {/* Logo */}
+            <div className="relative">
+              <img 
+                src="/countrydatingapp-high-resolution-logo.png" 
+                alt="Country Checklist Logo" 
+                className="h-20 w-auto object-contain"
+                onError={(e) => {
+                  // Fallback if logo doesn't exist
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Welcome, {user.name}!
+              </h1>
+              <p className="text-slate-400 mt-1">Track your country adventures</p>
+            </div>
           </div>
           <Button
             onClick={handleLogout}
