@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { MapPin, Heart, Search, X, Filter } from 'lucide-react';
+import { MapPin, Heart, Search, X, Filter, Star } from 'lucide-react';
 
-export type FilterType = 'all' | 'visited' | 'dated' | 'both';
+export type FilterType = 'all' | 'visited' | 'dated' | 'wishlist' | 'both';
 
 interface CountryFilterProps {
   filterType: FilterType;
@@ -15,6 +15,7 @@ interface CountryFilterProps {
   onSearchChange: (query: string) => void;
   visitedCount: number;
   datedCount: number;
+  wishlistCount: number;
 }
 
 export default function CountryFilter({
@@ -24,6 +25,7 @@ export default function CountryFilter({
   onSearchChange,
   visitedCount,
   datedCount,
+  wishlistCount,
 }: CountryFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -110,6 +112,19 @@ export default function CountryFilter({
               >
                 <Heart className="h-3 w-3 mr-1" />
                 Dated ({datedCount})
+              </Button>
+              <Button
+                variant={filterType === 'wishlist' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onFilterChange('wishlist')}
+                className={`${
+                  filterType === 'wishlist'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
+                    : 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                }`}
+              >
+                <Star className="h-3 w-3 mr-1" />
+                Wishlist ({wishlistCount})
               </Button>
               <Button
                 variant={filterType === 'both' ? 'default' : 'outline'}

@@ -8,14 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import CountryMap from '@/components/CountryMap';
 import VisitedCountriesPanel from '@/components/VisitedCountriesPanel';
 import DatedCountriesPanel from '@/components/DatedCountriesPanel';
+import WishlistCountriesPanel from '@/components/WishlistCountriesPanel';
 import CountrySelectionDialog from '@/components/CountrySelectionDialog';
 import CountryFilter, { FilterType } from '@/components/CountryFilter';
 import { countries } from '@/lib/countries';
-import { LogOut, Globe, CheckCircle2, X, MapPin, Heart } from 'lucide-react';
+import { LogOut, Globe, CheckCircle2, X, MapPin, Heart, Star } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, token, clearAuth, updateVisitedCountries, updateDatedCountries } = useAuthStore();
+  const { user, token, clearAuth, updateVisitedCountries, updateDatedCountries, updateWishlistCountries } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [mapLoading, setMapLoading] = useState(false);
   const [showPanel, setShowPanel] = useState(true);
@@ -43,13 +44,18 @@ export default function DashboardPage() {
     if (!token) return;
     
     try {
-      const [visitedResponse, datedResponse] = await Promise.all([
+      const [visitedResponse, datedResponse, wishlistResponse] = await Promise.all([
         fetch('/api/countries', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
         fetch('/api/dated-countries', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch('/api/wishlist-countries', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -64,6 +70,11 @@ export default function DashboardPage() {
       if (datedResponse.ok) {
         const data = await datedResponse.json();
         updateDatedCountries(data.datedCountries || []);
+      }
+      
+      if (wishlistResponse.ok) {
+        const data = await wishlistResponse.json();
+        updateWishlistCountries(data.wishlistCountries || []);
       }
     } catch (error) {
       console.error('Failed to fetch countries:', error);
@@ -229,6 +240,82 @@ export default function DashboardPage() {
     }
   };
 
+  const handleAddToWishlist = async () => {
+    if (!token || !selectedCountry) return;
+    
+    setMapLoading(true);
+    try {
+      const response = await fetch('/api/wishlist-countries', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode: selectedCountry }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateWishlistCountries(data.wishlistCountries);
+      }
+    } catch (error) {
+      console.error('Failed to update wishlist country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  const handleRemoveFromWishlist = async () => {
+    if (!token || !selectedCountry) return;
+    
+    setMapLoading(true);
+    try {
+      const response = await fetch('/api/wishlist-countries', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode: selectedCountry }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateWishlistCountries(data.wishlistCountries);
+      }
+    } catch (error) {
+      console.error('Failed to remove wishlist country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  const handleRemoveWishlistCountry = async (countryCode: string) => {
+    if (!token) return;
+    
+    setMapLoading(true);
+    
+    try {
+      const response = await fetch('/api/wishlist-countries', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ countryCode }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateWishlistCountries(data.wishlistCountries);
+      }
+    } catch (error) {
+      console.error('Failed to remove wishlist country:', error);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     clearAuth();
     router.push('/login');
@@ -244,6 +331,7 @@ export default function DashboardPage() {
 
   const visitedCount = user.visitedCountries.length;
   const datedCount = user.datedCountries?.length || 0;
+  const wishlistCount = user.wishlistCountries?.length || 0;
   const totalCount = countries.length;
   const percentage = Math.round((visitedCount / totalCount) * 100);
 
@@ -290,6 +378,7 @@ export default function DashboardPage() {
           onSearchChange={setSearchQuery}
           visitedCount={visitedCount}
           datedCount={datedCount}
+          wishlistCount={wishlistCount}
         />
 
         {/* Stats Cards */}
@@ -369,6 +458,7 @@ export default function DashboardPage() {
                   <CountryMap
                     visitedCountries={user.visitedCountries}
                     datedCountries={user.datedCountries || []}
+                    wishlistCountries={user.wishlistCountries || []}
                     onCountryClick={handleCountryClick}
                     filterType={filterType}
                     searchQuery={searchQuery}
@@ -380,9 +470,10 @@ export default function DashboardPage() {
 
           {/* Side Panels - Takes 2 columns on large screens, stacked on mobile */}
           {showPanel && (
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               <VisitedCountriesPanel onRemoveCountry={handleRemoveCountry} />
               <DatedCountriesPanel onRemoveCountry={handleRemoveDatedCountry} />
+              <WishlistCountriesPanel onRemoveCountry={handleRemoveWishlistCountry} />
             </div>
           )}
         </div>
@@ -393,14 +484,17 @@ export default function DashboardPage() {
           countryCode={selectedCountry}
           isVisited={user?.visitedCountries.includes(selectedCountry || '') || false}
           isDated={user?.datedCountries?.includes(selectedCountry || '') || false}
+          isWishlist={user?.wishlistCountries?.includes(selectedCountry || '') || false}
           onClose={() => {
             setIsDialogOpen(false);
             setSelectedCountry(null);
           }}
           onAddToVisited={handleAddToVisited}
           onAddToDated={handleAddToDated}
+          onAddToWishlist={handleAddToWishlist}
           onRemoveFromVisited={handleRemoveFromVisited}
           onRemoveFromDated={handleRemoveFromDated}
+          onRemoveFromWishlist={handleRemoveFromWishlist}
         />
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Heart, X } from 'lucide-react';
+import { MapPin, Heart, X, Star } from 'lucide-react';
 import { countries } from '@/lib/countries';
 
 interface CountrySelectionDialogProps {
@@ -11,11 +11,14 @@ interface CountrySelectionDialogProps {
   countryCode: string | null;
   isVisited: boolean;
   isDated: boolean;
+  isWishlist: boolean;
   onClose: () => void;
   onAddToVisited: () => void;
   onAddToDated: () => void;
+  onAddToWishlist: () => void;
   onRemoveFromVisited: () => void;
   onRemoveFromDated: () => void;
+  onRemoveFromWishlist: () => void;
 }
 
 export default function CountrySelectionDialog({
@@ -23,11 +26,14 @@ export default function CountrySelectionDialog({
   countryCode,
   isVisited,
   isDated,
+  isWishlist,
   onClose,
   onAddToVisited,
   onAddToDated,
+  onAddToWishlist,
   onRemoveFromVisited,
   onRemoveFromDated,
+  onRemoveFromWishlist,
 }: CountrySelectionDialogProps) {
   const getCountryName = (code: string | null) => {
     if (!code) return '';
@@ -138,6 +144,37 @@ export default function CountrySelectionDialog({
                     className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
                   >
                     Add to Dated
+                  </Button>
+                )}
+              </div>
+
+              {/* Wishlist Section */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+                  <Star className="h-4 w-4 text-amber-400" />
+                  Wishlist Countries
+                </div>
+                {isWishlist ? (
+                  <Button
+                    onClick={() => {
+                      onRemoveFromWishlist();
+                      onClose();
+                    }}
+                    variant="outline"
+                    className="w-full border-red-500/50 hover:bg-red-500/20 hover:border-red-500 text-red-400"
+                  >
+                    Remove from Wishlist
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      onAddToWishlist();
+                      onClose();
+                    }}
+                    variant="default"
+                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
+                  >
+                    Add to Wishlist
                   </Button>
                 )}
               </div>

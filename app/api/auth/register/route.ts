@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       name,
       visitedCountries: [],
+      datedCountries: [],
+      wishlistCountries: [],
     });
 
     // Generate token
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
           name: user.name,
           visitedCountries: user.visitedCountries,
           datedCountries: user.datedCountries || [],
+          wishlistCountries: user.wishlistCountries || [],
         },
       },
       { status: 201 }

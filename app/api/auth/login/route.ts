@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
           name: user.name,
           visitedCountries: user.visitedCountries,
           datedCountries: user.datedCountries || [],
+          wishlistCountries: user.wishlistCountries || [],
         },
       },
       { status: 200 }

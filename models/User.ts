@@ -6,6 +6,7 @@ export interface IUser extends Document {
   name: string;
   visitedCountries: string[];
   datedCountries: string[];
+  wishlistCountries: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,10 @@ const UserSchema: Schema = new Schema(
       default: [],
     },
     datedCountries: {
+      type: [String],
+      default: [],
+    },
+    wishlistCountries: {
       type: [String],
       default: [],
     },

@@ -17,6 +17,7 @@ import { FilterType } from './CountryFilter';
 interface CountryMapProps {
   visitedCountries: string[];
   datedCountries?: string[];
+  wishlistCountries?: string[];
   onCountryClick: (countryCode: string) => void;
   filterType?: FilterType;
   searchQuery?: string;
@@ -25,6 +26,7 @@ interface CountryMapProps {
 export default function CountryMap({ 
   visitedCountries, 
   datedCountries = [], 
+  wishlistCountries = [],
   onCountryClick,
   filterType = 'all',
   searchQuery = '',
@@ -39,6 +41,10 @@ export default function CountryMap({
 
   const isDated = (countryCode: string) => {
     return datedCountries.includes(countryCode);
+  };
+
+  const isWishlist = (countryCode: string) => {
+    return wishlistCountries.includes(countryCode);
   };
 
   const getCountryName = (countryCode: string) => {
@@ -161,6 +167,9 @@ export default function CountryMap({
             {hoveredCountry && isDated(hoveredCountry) && (
               <span className="text-pink-400 text-xl">❤️</span>
             )}
+            {hoveredCountry && isWishlist(hoveredCountry) && (
+              <span className="text-amber-400 text-xl">⭐</span>
+            )}
           </div>
         </div>
       )}
@@ -213,6 +222,14 @@ export default function CountryMap({
             <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="amberGlow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feColorMatrix type="matrix" values="1 0.5 0 0 0  0.5 0.3 0 0 0  0 0 0 0 0  0 0 0 1 0" result="amberBlur"/>
+            <feMerge>
+              <feMergeNode in="amberBlur"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
@@ -301,10 +318,11 @@ export default function CountryMap({
                 const countryCode = country ? country.code : countryName;
                 const visited = isVisited(countryCode);
                 const dated = isDated(countryCode);
+                const wishlist = isWishlist(countryCode);
                 const isHovered = hoveredCountry === countryCode;
                 
                 // Apply filters
-                const matchesSearch = searchQuery === '' || 
+                const matchesSearch = searchQuery === '' ||
                   countryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   (country && country.name.toLowerCase().includes(searchQuery.toLowerCase()));
                 
@@ -312,6 +330,7 @@ export default function CountryMap({
                   filterType === 'all' ||
                   (filterType === 'visited' && visited) ||
                   (filterType === 'dated' && dated) ||
+                  (filterType === 'wishlist' && wishlist) ||
                   (filterType === 'both' && (visited || dated));
                 
                 const shouldHighlight = matchesSearch && matchesFilter;
@@ -346,10 +365,10 @@ export default function CountryMap({
                       default: {
                         outline: 'none',
                         cursor: 'pointer',
-                        filter: shouldBlackOut ? 'none' : (visited ? 'url(#strongGlow)' : (dated ? 'url(#pinkGlow)' : (shouldHighlight ? 'url(#glow)' : 'none'))),
+                        filter: shouldBlackOut ? 'none' : (visited ? 'url(#strongGlow)' : (dated ? 'url(#pinkGlow)' : (wishlist ? 'url(#amberGlow)' : (shouldHighlight ? 'url(#glow)' : 'none')))),
                         transition: 'all 0.3s ease',
-                        stroke: shouldBlackOut ? '#000000' : (dated ? '#ec4899' : (shouldHighlight ? '#60a5fa' : '#333333')),
-                        strokeWidth: shouldBlackOut ? 0.3 : (dated ? 1.5 : (shouldHighlight ? 1 : 0.5)),
+                        stroke: shouldBlackOut ? '#000000' : (dated ? '#ec4899' : (wishlist ? '#f59e0b' : (shouldHighlight ? '#60a5fa' : '#333333'))),
+                        strokeWidth: shouldBlackOut ? 0.3 : (dated ? 1.5 : (wishlist ? 1.5 : (shouldHighlight ? 1 : 0.5))),
                         opacity: shouldBlackOut ? 1 : 1,
                         fill: countryColor,
                       },
@@ -358,7 +377,7 @@ export default function CountryMap({
                         cursor: 'pointer',
                         stroke: shouldBlackOut ? '#000000' : '#ffffff',
                         strokeWidth: shouldBlackOut ? 0.3 : 2,
-                        filter: shouldBlackOut ? 'none' : (visited || dated ? 'url(#strongGlow)' : (shouldHighlight ? 'url(#glow)' : 'url(#glow)')),
+                        filter: shouldBlackOut ? 'none' : (visited || dated || wishlist ? 'url(#strongGlow)' : (shouldHighlight ? 'url(#glow)' : 'url(#glow)')),
                         fill: countryColor,
                         opacity: 1,
                       },
