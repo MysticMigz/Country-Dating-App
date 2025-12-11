@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 
 export interface TokenPayload {
   userId: string;
-  email: string;
+  username: string;
 }
 
 export function generateToken(payload: TokenPayload): string {
@@ -27,4 +27,5 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePassword(password: string, hashedPassword: string): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
 }
+
 

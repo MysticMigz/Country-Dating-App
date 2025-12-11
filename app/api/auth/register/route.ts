@@ -5,11 +5,11 @@ import { hashPassword, generateToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { username, password } = await request.json();
 
-    if (!email || !password || !name) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: 'Email, password, and name are required' },
+        { error: 'Username and password are required' },
         { status: 400 }
       );
     }
@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ username: username.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User already exists' },
+        { error: 'Username already exists' },
         { status: 400 }
       );
     }
@@ -37,16 +37,16 @@ export async function POST(request: NextRequest) {
     // Hash password and create user
     const hashedPassword = await hashPassword(password);
     const user = await User.create({
-      email,
+      username: username.toLowerCase(),
       password: hashedPassword,
-      name,
+      name: username, // Use username as display name
       visitedCountries: [],
       datedCountries: [],
       wishlistCountries: [],
     });
 
     // Generate token
-    const token = generateToken({ userId: user._id.toString(), email: user.email });
+    const token = generateToken({ userId: user._id.toString(), username: user.username });
 
     return NextResponse.json(
       {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         token,
         user: {
           id: user._id,
-          email: user.email,
+          username: user.username,
           name: user.name,
           visitedCountries: user.visitedCountries,
           datedCountries: user.datedCountries || [],

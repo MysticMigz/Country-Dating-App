@@ -5,11 +5,11 @@ import { comparePassword, generateToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { username, password } = await request.json();
 
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Username and password are required' },
         { status: 400 }
       );
     }
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username: username.toLowerCase() });
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate token
-    const token = generateToken({ userId: user._id.toString(), email: user.email });
+    const token = generateToken({ userId: user._id.toString(), username: user.username });
 
     return NextResponse.json(
       {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         token,
         user: {
           id: user._id,
-          email: user.email,
+          username: user.username,
           name: user.name,
           visitedCountries: user.visitedCountries,
           datedCountries: user.datedCountries || [],
